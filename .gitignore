@@ -1,9 +1,10 @@
-
 # Python
 __pycache__/
 *.py[cod]
 *.egg-info/
 .pytest_cache/
+.coverage
+htmlcov/
 
 # Virtual env
 venv/
@@ -12,7 +13,7 @@ venv/
 # Jupyter
 .ipynb_checkpoints/
 
-# Experiments (regeneratable, not git-tracked)
+# RL outputs (regeneratable)
 experiments/policies/*.pkl
 experiments/policies/*.pt
 experiments/results/*.csv
@@ -20,7 +21,24 @@ experiments/results/*.json
 experiments/figures/*.png
 experiments/videos/*.mp4
 
-# Keep folder structure
+# MLflow local server
+mlruns/
+mlartifacts/
+mlflow.db
+
+# DVC
+/data/raw/*
+/data/processed/*
+!/data/raw/.gitkeep
+!/data/processed/.gitkeep
+.dvc/cache
+.dvc/tmp
+
+# FastAPI logs
+api/logs/*.log
+api/logs/*.db
+
+# Keep folder placeholders
 !experiments/policies/.gitkeep
 !experiments/results/.gitkeep
 !experiments/figures/.gitkeep
@@ -29,14 +47,12 @@ experiments/videos/*.mp4
 # OS
 .DS_Store
 *.swp
+*.swo
 
 # IDE
 .vscode/
 .idea/
+*.iml
 
-
-# Add placeholders so empty folders are tracked by git
-touch experiments/policies/.gitkeep
-touch experiments/results/.gitkeep
-touch experiments/figures/.gitkeep
-touch experiments/videos/.gitkeep
+# Docker
+.docker/
