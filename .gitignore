@@ -1,0 +1,42 @@
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Virtual env
+venv/
+.venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Experiments (regeneratable, not git-tracked)
+experiments/policies/*.pkl
+experiments/policies/*.pt
+experiments/results/*.csv
+experiments/results/*.json
+experiments/figures/*.png
+experiments/videos/*.mp4
+
+# Keep folder structure
+!experiments/policies/.gitkeep
+!experiments/results/.gitkeep
+!experiments/figures/.gitkeep
+!experiments/videos/.gitkeep
+
+# OS
+.DS_Store
+*.swp
+
+# IDE
+.vscode/
+.idea/
+
+
+# Add placeholders so empty folders are tracked by git
+touch experiments/policies/.gitkeep
+touch experiments/results/.gitkeep
+touch experiments/figures/.gitkeep
+touch experiments/videos/.gitkeep
