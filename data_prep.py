@@ -1,4 +1,3 @@
-
 """
 Data preparation pipeline for food rescue scenarios.
 
