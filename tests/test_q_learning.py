@@ -15,7 +15,7 @@ class TestDiscretization:
         env.reset(seed=42)
         s = discretize_state(env)
         assert isinstance(s, tuple)
-        assert len(s) == 6
+        assert len(s) == 9
 
     def test_discretize_deterministic(self):
         env = FoodRescueEnv()
