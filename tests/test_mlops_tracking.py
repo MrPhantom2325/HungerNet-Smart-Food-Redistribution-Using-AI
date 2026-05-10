@@ -1,7 +1,6 @@
 
 """Tests for mlops_tracking module."""
 
-import os
 import tempfile
 
 import mlflow
