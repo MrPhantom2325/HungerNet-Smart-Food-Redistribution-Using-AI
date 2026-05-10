@@ -11,11 +11,11 @@ run:
     learning on the same task.
 
 agent_params:
-  learning_rate: 0.1
+  learning_rate: 0.05
   discount: 0.95
   epsilon_start: 1.0
-  epsilon_end: 0.05
-  epsilon_decay_episodes: 800
+  epsilon_end: 0.15
+  epsilon_decay_episodes: 1000
   optimistic_init: 0.0
   pos_buckets: 3
   load_buckets: 3

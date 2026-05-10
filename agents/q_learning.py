@@ -75,59 +75,113 @@ def discretize_state(env: FoodRescueEnv, n_pos_buckets: int = 3, n_load_buckets:
     """
     Reduce the env state to a compact, hashable tuple.
 
-    Returns
-    -------
-    tuple (vehicle_xy_bucket, load_bucket, urgent_donor_idx, best_shelter_idx, time_bucket, vehicle_idx)
+    Design: give the agent enough signal to decide WHERE to go without baking
+    in a heuristic. We encode counts (not bitmasks) so the state space stays
+    tractable for tabular methods.
+
+    Tuple layout:
+    - pos_bucket: which 3x3 region the vehicle is in (9 values)
+    - load_bucket: empty / partial / full (3 values)
+    - num_donors_with_food: bucketed 0/1/2-3/4+ (4 values)
+    - max_donor_qty_bucket: how much food at the most-loaded donor (4 values)
+    - num_shelters_with_demand: bucketed 0/1/2-3/4+ (4 values)
+    - max_shelter_demand_bucket: how urgent at the most-needy shelter (4 values)
+    - urgency_flag: any pending batch with shelf_life <= 15? (2 values)
+    - time_bucket: morning/afternoon/evening (3 values)
+    - vehicle_idx: which vehicle is acting (2 values)
+
+    State space: 9 * 3 * 4 * 4 * 4 * 4 * 2 * 3 * 2 = ~41,500
+    Roughly 10x smaller than the bitmask version, which means the agent can
+    actually populate enough cells with meaningful Q-values.
     """
     v = env.vehicles[env.current_vehicle_idx]
     scn = env.scenario
     gs = env.grid_size
 
-    # Vehicle position bucket (encoded as a single int 0..n_pos_buckets^2 - 1)
+    # Vehicle position bucket
     x_bucket = _bucket(v.location[0] / gs, n_pos_buckets)
     y_bucket = _bucket(v.location[1] / gs, n_pos_buckets)
     pos_bucket = x_bucket * n_pos_buckets + y_bucket
 
-    # Load bucket
+    # Vehicle load bucket
     load_frac = v.current_load() / v.capacity if v.capacity > 0 else 0.0
     load_bucket = _bucket(load_frac, n_load_buckets)
 
-    # Nearest urgent donor (with food, prioritize low shelf life when close)
-    urgent_donor_idx = scn.num_donors  # sentinel: "no donor matters"
-    best_donor_score = -1.0
-    for i, d in enumerate(scn.donors):
+    # Donor counts and max
+    num_donors_with_food = 0
+    max_donor_qty = 0.0
+    urgency_flag = 0
+    for d in scn.donors:
         qty = d.total_pending_quantity()
-        if qty <= 0:
-            continue
-        dist = abs(v.location[0] - d.location[0]) + abs(v.location[1] - d.location[1])
-        urgency = max(1, 30 - d.min_pending_shelf_life())  # higher when shelf life low
-        score = qty * urgency / (dist + 1)
-        if score > best_donor_score:
-            best_donor_score = score
-            urgent_donor_idx = i
+        if qty > 0:
+            num_donors_with_food += 1
+            if qty > max_donor_qty:
+                max_donor_qty = qty
+            if d.min_pending_shelf_life() <= 15:
+                urgency_flag = 1
 
-    # Best shelter (highest priority * demand / distance)
-    best_shelter_idx = scn.num_shelters
-    best_shelter_score = -1.0
-    for j, s in enumerate(scn.shelters):
-        if s.current_demand <= 0:
-            continue
-        dist = abs(v.location[0] - s.location[0]) + abs(v.location[1] - s.location[1])
-        priority_w = 2.0 if s.priority == 1 else 1.0
-        score = priority_w * s.current_demand / (dist + 1)
-        if score > best_shelter_score:
-            best_shelter_score = score
-            best_shelter_idx = j
+    # Bucket donor count: 0, 1, 2-3, 4+
+    if num_donors_with_food == 0:
+        donor_count_bucket = 0
+    elif num_donors_with_food == 1:
+        donor_count_bucket = 1
+    elif num_donors_with_food <= 3:
+        donor_count_bucket = 2
+    else:
+        donor_count_bucket = 3
 
-    # Time bucket: 0=morning, 1=afternoon, 2=evening
+    # Bucket max donor quantity: 0, light, medium, heavy
+    # Use vehicle capacity as the reference scale
+    cap = v.capacity if v.capacity > 0 else 20.0
+    if max_donor_qty == 0:
+        donor_qty_bucket = 0
+    elif max_donor_qty < cap * 0.3:
+        donor_qty_bucket = 1
+    elif max_donor_qty < cap * 0.7:
+        donor_qty_bucket = 2
+    else:
+        donor_qty_bucket = 3
+
+    # Shelter counts and max
+    num_shelters_with_demand = 0
+    max_shelter_demand = 0.0
+    for s in scn.shelters:
+        if s.current_demand >= 5.0:  # threshold to filter noise
+            num_shelters_with_demand += 1
+            if s.current_demand > max_shelter_demand:
+                max_shelter_demand = s.current_demand
+
+    if num_shelters_with_demand == 0:
+        shelter_count_bucket = 0
+    elif num_shelters_with_demand == 1:
+        shelter_count_bucket = 1
+    elif num_shelters_with_demand <= 3:
+        shelter_count_bucket = 2
+    else:
+        shelter_count_bucket = 3
+
+    # Bucket max shelter demand
+    if max_shelter_demand == 0:
+        shelter_demand_bucket = 0
+    elif max_shelter_demand < 30:
+        shelter_demand_bucket = 1
+    elif max_shelter_demand < 60:
+        shelter_demand_bucket = 2
+    else:
+        shelter_demand_bucket = 3
+
+    # Time bucket
     bucket_str = scn.city.time_bucket(env.current_step)
     time_bucket = {"morning": 0, "afternoon": 1, "evening": 2}.get(bucket_str, 0)
 
     return (
         pos_bucket,
         load_bucket,
-        urgent_donor_idx,
-        best_shelter_idx,
+        donor_count_bucket,
+        donor_qty_bucket,
+        shelter_count_bucket,
+        shelter_demand_bucket,
+        urgency_flag,
         time_bucket,
         env.current_vehicle_idx,
     )
