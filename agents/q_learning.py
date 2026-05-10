@@ -33,8 +33,7 @@ The Q-table is pickled. Loaded policies don't update unless you call set_trainin
 from __future__ import annotations
 
 import pickle
-from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
