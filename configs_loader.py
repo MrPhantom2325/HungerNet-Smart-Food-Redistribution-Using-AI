@@ -1,4 +1,3 @@
-
 """
 YAML-based experiment configuration system.
 

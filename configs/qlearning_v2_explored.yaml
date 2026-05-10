@@ -31,4 +31,3 @@ reward_weights:
 eval:
   n_episodes: 5
   eval_seeds: [100, 101, 102, 103, 104]
-EOF
