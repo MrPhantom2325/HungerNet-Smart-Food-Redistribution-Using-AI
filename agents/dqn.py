@@ -247,10 +247,10 @@ class DQNAgent(Policy):
         meta_path = path.with_suffix(".meta.json")
         meta = {
             "config": asdict(self.config),
-            "obs_dim": self.obs_dim,
-            "num_actions": self.num_actions,
-            "step_count": self._step_count,
-            "episode_count": self._episode_count,
+            "obs_dim": int(self.obs_dim),
+            "num_actions": int(self.num_actions),
+            "step_count": int(self._step_count),
+            "episode_count": int(self._episode_count),
         }
         with open(meta_path, "w") as f:
             json.dump(meta, f, indent=2)
@@ -286,8 +286,8 @@ class DQNAgent(Policy):
 
     def stats(self) -> dict:
         return {
-            "step_count": self._step_count,
-            "episode_count": self._episode_count,
+            "step_count": int(self._step_count),
+            "episode_count": int(self._episode_count),
             "epsilon_current": self.epsilon(),
             "replay_size": len(self.replay),
             "device": str(self.device),
