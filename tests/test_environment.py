@@ -4,7 +4,7 @@
 import numpy as np
 import pytest
 
-from sim.environment import EnvConfig, FoodRescueEnv, RewardWeights
+from sim.environment import EnvConfig, FoodRescueEnv
 
 
 # -----------------------------

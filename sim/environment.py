@@ -48,7 +48,7 @@ import numpy as np
 from gymnasium import spaces
 
 from sim.city import ScenarioLoader, make_vehicles
-from sim.entities import BatchStatus, FoodBatch
+from sim.entities import FoodBatch
 
 
 # -----------------------------
