@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 # -----------------------------
@@ -52,6 +52,8 @@ class PredictRequest(BaseModel):
 class PredictResponse(BaseModel):
     """The chosen action plus interpretation."""
 
+    model_config = ConfigDict(protected_namespaces=())
+
     action: int = Field(..., description="Discrete action index in [0, num_actions)")
     action_kind: str = Field(
         ...,
@@ -76,6 +78,8 @@ class PredictResponse(BaseModel):
 # -----------------------------
 
 class HealthResponse(BaseModel):
+    model_config = ConfigDict(protected_namespaces=())
+
     status: str = Field(..., description="'ok' if service is healthy")
     model_loaded: bool = Field(..., description="True if a policy is loaded and ready")
     uptime_seconds: float = Field(..., description="Seconds since service started")
@@ -86,6 +90,8 @@ class HealthResponse(BaseModel):
 # -----------------------------
 
 class ModelInfoResponse(BaseModel):
+    model_config = ConfigDict(protected_namespaces=())
+
     model_name: str
     model_version: str
     agent_kind: str = Field(..., description="'dqn', 'q_learning', etc.")
