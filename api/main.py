@@ -65,11 +65,7 @@ async def lifespan(app: FastAPI):
     """Load the policy on startup."""
     print("Starting food rescue prediction service...")
     try:
-        from api.policy_loader import load_policy_from_env
-        policy, info = load_policy_from_env()
-        state["policy"] = policy
-        state["model_info"] = info
-        print(f"Loaded policy: {info['model_name']} v{info['model_version']}")
+        load_policy_from_env_if_needed()
     except Exception as e:
         # Don't kill the service if loading fails — let /health report unhealthy
         print(f"WARNING: Failed to load policy on startup: {e}")
@@ -77,6 +73,15 @@ async def lifespan(app: FastAPI):
     yield
     # No specific shutdown work yet (DB writes happen synchronously)
     print("Service shutting down.")
+
+
+def load_policy_from_env_if_needed():
+    """Thin wrapper so tests can patch startup policy loading."""
+    from api.policy_loader import load_policy_from_env
+    policy, info = load_policy_from_env()
+    state["policy"] = policy
+    state["model_info"] = info
+    print(f"Loaded policy: {info['model_name']} v{info['model_version']}")
 
 
 app = FastAPI(
