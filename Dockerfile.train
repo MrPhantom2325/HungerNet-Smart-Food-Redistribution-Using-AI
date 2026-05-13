@@ -23,7 +23,7 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 
 COPY . .
 
-RUN python data_prep.py
+RUN python data_prep.py --scenario all
 
 ENV CONFIG=configs/qlearning_v1.yaml
 ENV MLFLOW_TRACKING_URI=http://mlflow:5000
