@@ -1,41 +1,30 @@
-# ─────────────────────────────────────────────────────────────
-# Stage 1: builder — installs Python deps into a virtual env
-# ─────────────────────────────────────────────────────────────
-FROM python:3.11-slim AS builder
+FROM python:3.11-slim-bookworm AS builder
 
 WORKDIR /app
 
-# System libs needed by some pip packages (scipy, matplotlib)
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends --fix-missing \
     gcc g++ libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
 
-# Install CPU-only PyTorch first (keeps the image small; MPS unavailable in containers anyway)
 RUN pip install --upgrade pip \
  && pip install --no-cache-dir \
     torch==2.2.0 --index-url https://download.pytorch.org/whl/cpu \
  && pip install --no-cache-dir -r requirements.txt
 
-# ─────────────────────────────────────────────────────────────
-# Stage 2: runtime image
-# ─────────────────────────────────────────────────────────────
-FROM python:3.11-slim AS train
+# ── runtime ──
+FROM python:3.11-slim-bookworm AS train
 
 WORKDIR /app
 
-# Copy installed packages from builder
 COPY --from=builder /usr/local/lib/python3.11 /usr/local/lib/python3.11
 COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Copy project source
 COPY . .
 
-# Bake data into the image so training is self-contained
 RUN python data_prep.py
 
-# CONFIG is set at runtime via --env; falls back to a sensible default
 ENV CONFIG=configs/qlearning_v1.yaml
 ENV MLFLOW_TRACKING_URI=http://mlflow:5000
 

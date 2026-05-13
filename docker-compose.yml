@@ -1,19 +1,12 @@
-version: "3.9"
-
-# ── Shared network so containers can reach each other by name ──────────────
 networks:
   rescue_net:
     driver: bridge
 
-# ── Named volumes ──────────────────────────────────────────────────────────
 volumes:
-  mlflow_data:          # persists MLflow runs/artifacts between restarts
-  experiments_data:     # trained policies shared between train & serve
+  mlflow_data:
+  experiments_data:
 
-# ══════════════════════════════════════════════════════════════════════════
 services:
-
-  # ── 1. MLflow tracking server ──────────────────────────────────────────
   mlflow:
     image: ghcr.io/mlflow/mlflow:v2.10.0
     container_name: food_rescue_mlflow
@@ -34,9 +27,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # ── 2. Training container (run-once, profile-gated) ────────────────────
   train:
-    profiles: [train]
     build:
       context: .
       dockerfile: Dockerfile.train
@@ -46,16 +37,12 @@ services:
       mlflow:
         condition: service_healthy
     volumes:
-      - experiments_data:/app/experiments   # persist trained policies
+      - experiments_data:/app/experiments
     environment:
       - CONFIG=${CONFIG:-configs/qlearning_v1.yaml}
       - MLFLOW_TRACKING_URI=http://mlflow:5000
-    # Override CONFIG on the CLI:
-    # docker compose --profile train run -e CONFIG=configs/dqn_v2_holiday.yaml train
 
-  # ── 3. FastAPI inference server (profile-gated) ────────────────────────
   serve:
-    profiles: [serve]
     build:
       context: .
       dockerfile: Dockerfile.serve
@@ -67,7 +54,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - experiments_data:/app/experiments   # reads trained policies
+      - experiments_data:/app/experiments
     environment:
       - MLFLOW_TRACKING_URI=http://mlflow:5000
     healthcheck:
