@@ -1,0 +1,31 @@
+FROM python:3.11-slim-bookworm AS builder
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends --fix-missing \
+    gcc g++ libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+
+RUN pip install --upgrade pip \
+ && pip install --no-cache-dir \
+    torch==2.2.0 --index-url https://download.pytorch.org/whl/cpu \
+ && pip install --no-cache-dir -r requirements.txt
+
+# ── runtime ──
+FROM python:3.11-slim-bookworm AS train
+
+WORKDIR /app
+
+COPY --from=builder /usr/local/lib/python3.11 /usr/local/lib/python3.11
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+COPY . .
+
+RUN python data_prep.py --scenario all
+
+ENV CONFIG=configs/qlearning_v1.yaml
+ENV MLFLOW_TRACKING_URI=http://mlflow:5000
+
+CMD ["sh", "-c", "python train.py --config ${CONFIG}"]
