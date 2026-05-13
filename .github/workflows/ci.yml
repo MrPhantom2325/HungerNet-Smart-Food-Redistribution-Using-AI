@@ -63,8 +63,9 @@ jobs:
 
       - name: Prepare data
         # data_prep.py validates scenario CSVs and writes derived features.
-        # Many tests depend on its outputs being present.
-        run: python data_prep.py
+        # Many tests depend on its outputs being present. `all` processes
+        # weekday, weekend, and holiday_rush in one go.
+        run: python data_prep.py --scenario all
 
       - name: Run pytest with coverage
         run: |

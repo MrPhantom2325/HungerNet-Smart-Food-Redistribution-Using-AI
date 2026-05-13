@@ -55,7 +55,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Prepare data
-        run: python data_prep.py
+        run: python data_prep.py --scenario all
 
       - name: Resolve config to train
         id: cfg
