@@ -1,4 +1,4 @@
-# 🥫 food-rescue-rl
+# 🥫HungerNet: Smart Food Redistribution Using AI
 
 > *Two trucks. Five donors. Five shelters. 200 timesteps. Zero tolerance for wasted food.*
 
